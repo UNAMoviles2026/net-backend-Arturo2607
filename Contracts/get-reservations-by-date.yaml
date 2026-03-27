@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Get Reservations by Date API
+  version: 1.0.0
+
+paths:
+  /api/reservations:
+    get:
+      summary: Get reservations by date
+      description: Returns all reservations for a specific date
+      parameters:
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-03-21"
+      responses:
+        '200':
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReservationResponse'
+
+        '400':
+          description: Invalid date format or missing query parameter
+
+components:
+  schemas:
+    ReservationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        classroomId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          format: time
+        endTime:
+          type: string
+          format: time

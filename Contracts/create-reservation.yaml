@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Create Reservation API
+  version: 1.0.0
+
+paths:
+  /api/reservations:
+    post:
+      summary: Create a reservation
+      description: Creates a classroom reservation for a specific date and time range
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Reservation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+        '400':
+          description: Invalid request
+        '409':
+          description: Time conflict with another reservation
+
+components:
+  schemas:
+    CreateReservationRequest:
+      type: object
+      required:
+        - classroomId
+        - date
+        - startTime
+        - endTime
+      properties:
+        classroomId:
+          type: string
+          format: uuid
+          example: "a3f1c2d4-1234-4c5d-9f1a-abcdef123456"
+        date:
+          type: string
+          format: date
+          example: "2026-03-21"
+        startTime:
+          type: string
+          format: time
+          example: "08:00:00"
+        endTime:
+          type: string
+          format: time
+          example: "10:00:00"
+
+    ReservationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        classroomId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          format: time
+        endTime:
+          type: string
+          format: time
