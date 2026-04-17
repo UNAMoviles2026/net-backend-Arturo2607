@@ -19,6 +19,7 @@ public class ReservationRepository : IReservationRepository
         await _context.SaveChangesAsync();
         return reservation;
     }
+    
     public async Task<List<Reservation>> GetByClassroomAndDateAsync(Guid classroomId, DateOnly date)
     {
         return await _context.Reservations
@@ -27,14 +28,22 @@ public class ReservationRepository : IReservationRepository
         .ToListAsync();
     }
 
-   public async Task<Reservation?> GetByIdAsync(Guid id)
-{
-    return await _context.Reservations.FindAsync(id);
-}
+    public async Task<Reservation?> GetByIdAsync(Guid id)
+    {
+        return await _context.Reservations.FindAsync(id);
+    }
 
     public async Task DeleteAsync(Reservation reservation)
     {
         _context.Reservations.Remove(reservation);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<Reservation>> GetByDateAsync(DateOnly date)
+    {
+        return await _context.Reservations
+            .AsNoTracking()
+            .Where(r => r.Date == date)
+            .ToListAsync();
     }
 }
