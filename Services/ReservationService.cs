@@ -23,20 +23,33 @@ public class ReservationService : IReservationService
         }
 
         var existingReservations = await _reservationRepository.GetByClassroomAndDateAsync(request.ClassroomId, request.Date);
-        
+
         if (HasOverlap(request.StartTime, request.EndTime, existingReservations))
         {
             throw new InvalidOperationException("The classroom is already reserved for the specified time.");
         }
-        
+
         var reservation = ReservationMapper.ToEntity(request);
         var createdReservation = await _reservationRepository.AddAsync(reservation);
-        
+
         return ReservationMapper.ToResponse(createdReservation);
     }
 
     private bool HasOverlap(TimeOnly startTime, TimeOnly endTime, List<Reservation> existingReservations)
     {
         return existingReservations.Any(r => startTime < r.EndTime && endTime > r.StartTime);
+    }
+
+    public async Task<bool> DeleteReservationAsync(Guid id)
+    {
+        var reservation = await _reservationRepository.GetByIdAsync(id);
+
+        if (reservation == null)
+        {
+            return false;
+        }
+
+        await _reservationRepository.DeleteAsync(reservation);
+        return true;
     }
 }
