@@ -7,7 +7,7 @@ paths:
   /api/reservations:
     get:
       summary: Get reservations by date
-      description: Returns all reservations for a specific date
+      description: Returns reservations for a calendar date, ordered by start time.
       parameters:
         - in: query
           name: date
@@ -27,7 +27,18 @@ paths:
                   $ref: '#/components/schemas/ReservationResponse'
 
         '400':
-          description: Invalid date format or missing query parameter
+          description: Missing or invalid date query parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   schemas:
@@ -35,6 +46,9 @@ components:
       type: object
       properties:
         id:
+          type: string
+          format: uuid
+        userId:
           type: string
           format: uuid
         classroomId:
@@ -49,3 +63,9 @@ components:
         endTime:
           type: string
           format: time
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string

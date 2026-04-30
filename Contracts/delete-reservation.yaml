@@ -7,7 +7,7 @@ paths:
   /api/reservations/{id}:
     delete:
       summary: Delete a reservation
-      description: Deletes a reservation by its ID
+      description: Deletes a reservation by its ID.
       parameters:
         - in: path
           name: id
@@ -20,3 +20,21 @@ paths:
           description: Reservation deleted successfully
         '404':
           description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string

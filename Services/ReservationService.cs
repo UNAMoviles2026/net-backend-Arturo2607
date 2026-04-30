@@ -1,5 +1,6 @@
 using reservations_api.DTOs.Requests;
 using reservations_api.DTOs.Responses;
+using reservations_api.Exceptions;
 using reservations_api.Mappers;
 using reservations_api.Models.Entities;
 using reservations_api.Repositories;
@@ -8,72 +9,71 @@ namespace reservations_api.Services;
 
 public class ReservationService : IReservationService
 {
-  private readonly IReservationRepository _reservationRepository;
-  private readonly IUserRepository _userRepository;
-  private readonly IClassroomRepository _classroomRepository;
-  private readonly INotificationService _notificationService;
+    private readonly IReservationRepository _reservationRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IClassroomRepository _classroomRepository;
+    private readonly INotificationService _notificationService;
 
-  public ReservationService(
-      IReservationRepository reservationRepository,
-      IUserRepository userRepository,
-      IClassroomRepository classroomRepository,
-      INotificationService notificationService)
-  {
-    _reservationRepository = reservationRepository;
-    _userRepository = userRepository;
-    _classroomRepository = classroomRepository;
-    _notificationService = notificationService;
-  }
-
-  public async Task<ReservationResponse> CreateAsync(CreateReservationRequest request)
-  {
-    if (request.StartTime >= request.EndTime)
+    public ReservationService(
+        IReservationRepository reservationRepository,
+        IUserRepository userRepository,
+        IClassroomRepository classroomRepository,
+        INotificationService notificationService)
     {
-      throw new InvalidOperationException("StartTime must be less than EndTime");
+        _reservationRepository = reservationRepository;
+        _userRepository = userRepository;
+        _classroomRepository = classroomRepository;
+        _notificationService = notificationService;
     }
 
-    var user = await _userRepository.GetByIdAsync(request.UserId);
-    if (user is null)
+    public async Task<ReservationResponse> CreateAsync(CreateReservationRequest request)
     {
-      throw new InvalidOperationException("User not found");
+        var user = await _userRepository.GetByIdAsync(request.UserId);
+        if (user is null)
+        {
+            throw new BadRequestDomainException("User not found.");
+        }
+
+        var classroom = await _classroomRepository.GetByIdAsync(request.ClassroomId);
+        if (classroom is null)
+        {
+            throw new BadRequestDomainException("Classroom not found.");
+        }
+
+        var existingReservations = await _reservationRepository.GetByClassroomAndDateAsync(
+            request.ClassroomId,
+            request.Date);
+
+        if (HasOverlap(request.StartTime, request.EndTime, existingReservations))
+        {
+            throw new ConflictDomainException("Time conflict with another reservation.");
+        }
+
+        var reservation = ReservationMapper.ToEntity(request);
+        var createdReservation = await _reservationRepository.AddAsync(reservation);
+        await _notificationService.SendReservationConfirmedAsync(createdReservation.UserId);
+
+        return ReservationMapper.ToResponse(createdReservation);
     }
 
-    var classroom = await _classroomRepository.GetByIdAsync(request.ClassroomId);
-    if (classroom is null)
+    public async Task<List<ReservationResponse>> GetByDateAsync(DateOnly date)
     {
-      throw new InvalidOperationException("Classroom not found");
+        var reservations = await _reservationRepository.GetByDateAsync(date);
+        return reservations.Select(ReservationMapper.ToResponse).ToList();
     }
 
-    var existingReservations = await _reservationRepository.GetByClassroomAndDateAsync(
-        request.ClassroomId,
-        request.Date);
-
-    if (HasOverlap(request.StartTime, request.EndTime, existingReservations))
+    public async Task DeleteByIdAsync(Guid id)
     {
-      throw new InvalidOperationException("Time conflict with another reservation");
+        var deleted = await _reservationRepository.DeleteByIdAsync(id);
+        if (!deleted)
+        {
+            throw new NotFoundDomainException("Reservation not found.");
+        }
     }
 
-    var reservation = ReservationMapper.ToEntity(request);
-    var createdReservation = await _reservationRepository.AddAsync(reservation);
-    await _notificationService.SendReservationConfirmedAsync(createdReservation.UserId);
-
-    return ReservationMapper.ToResponse(createdReservation);
-  }
-
-  public async Task<List<ReservationResponse>> GetByDateAsync(DateOnly date)
-  {
-    var reservations = await _reservationRepository.GetByDateAsync(date);
-    return reservations.Select(ReservationMapper.ToResponse).ToList();
-  }
-
-  public async Task<bool> DeleteByIdAsync(Guid id)
-  {
-    return await _reservationRepository.DeleteByIdAsync(id);
-  }
-
-  private static bool HasOverlap(TimeOnly startTime, TimeOnly endTime, List<Reservation> existingReservations)
-  {
-    return existingReservations.Any(r =>
-        startTime < r.EndTime && endTime > r.StartTime);
-  }
+    private static bool HasOverlap(TimeOnly startTime, TimeOnly endTime, List<Reservation> existingReservations)
+    {
+        return existingReservations.Any(r =>
+            startTime < r.EndTime && endTime > r.StartTime);
+    }
 }

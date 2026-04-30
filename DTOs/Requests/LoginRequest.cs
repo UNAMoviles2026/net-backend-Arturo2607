@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace reservations_api.DTOs.Requests;
 
-public class LoginRequest
+public sealed class LoginRequest
 {
     [Required]
     [EmailAddress]

@@ -1,0 +1,88 @@
+openapi: 3.0.3
+info:
+  title: Notifications — Save FCM device token
+  version: 1.0.0
+
+paths:
+  /api/notifications/token:
+    post:
+      summary: Save device token for a user
+      description: Stores the FCM device token on the user record for push notifications.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveDeviceTokenRequest'
+      responses:
+        '200':
+          description: Token saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblemDetails'
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    SaveDeviceTokenRequest:
+      type: object
+      required:
+        - userId
+        - deviceToken
+      properties:
+        userId:
+          type: string
+          format: uuid
+        deviceToken:
+          type: string
+          minLength: 1
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ValidationProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string

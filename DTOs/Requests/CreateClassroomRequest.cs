@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace reservations_api.DTOs.Requests;
 
-public class CreateClassroomRequest
+public sealed class CreateClassroomRequest
 {
     [Required]
     [MaxLength(100)]

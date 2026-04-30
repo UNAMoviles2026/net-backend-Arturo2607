@@ -1,3 +1,4 @@
+using reservations_api.Exceptions;
 using reservations_api.Repositories;
 
 namespace reservations_api.Services;
@@ -13,9 +14,13 @@ public class NotificationService : INotificationService
         _logger = logger;
     }
 
-    public async Task<bool> SaveDeviceTokenAsync(Guid userId, string deviceToken)
+    public async Task SaveDeviceTokenAsync(Guid userId, string deviceToken)
     {
-        return await _userRepository.SaveDeviceTokenAsync(userId, deviceToken);
+        var saved = await _userRepository.SaveDeviceTokenAsync(userId, deviceToken);
+        if (!saved)
+        {
+            throw new NotFoundDomainException("User not found");
+        }
     }
 
     public async Task SendReservationConfirmedAsync(Guid userId)

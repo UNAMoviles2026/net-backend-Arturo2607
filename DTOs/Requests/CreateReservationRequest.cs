@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace reservations_api.DTOs.Requests;
 
-public class CreateReservationRequest
+public sealed class CreateReservationRequest : IValidatableObject
 {
     [Required]
     public Guid UserId { get; set; }
@@ -18,4 +18,14 @@ public class CreateReservationRequest
 
     [Required]
     public TimeOnly EndTime { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (EndTime <= StartTime)
+        {
+            yield return new ValidationResult(
+                "EndTime must be after StartTime.",
+                [nameof(EndTime), nameof(StartTime)]);
+        }
+    }
 }

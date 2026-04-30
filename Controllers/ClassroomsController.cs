@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using reservations_api.DTOs.Requests;
+using reservations_api.DTOs.Responses;
 using reservations_api.Services;
 
 namespace reservations_api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
 [Route("api/[controller]")]
 public class ClassroomsController : ControllerBase
 {
@@ -16,33 +18,36 @@ public class ClassroomsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [ProducesResponseType(typeof(List<ClassroomResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<List<ClassroomResponse>>> GetAll()
     {
         var classrooms = await _classroomService.GetAllAsync();
         return Ok(classrooms);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    [ProducesResponseType(typeof(ClassroomResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ClassroomResponse>> GetById(Guid id)
     {
         var classroom = await _classroomService.GetByIdAsync(id);
 
         if (classroom is null)
         {
-            return NotFound();
+            return NotFound(new ErrorResponse { Message = "Classroom not found." });
         }
 
         return Ok(classroom);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateClassroomRequest request)
+    [ProducesResponseType(typeof(ClassroomResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ClassroomResponse>> Create([FromBody] CreateClassroomRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            return ValidationProblem(ModelState);
-        }
-
         var createdClassroom = await _classroomService.CreateAsync(request);
 
         return CreatedAtAction(

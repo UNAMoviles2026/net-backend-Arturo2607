@@ -1,6 +1,6 @@
 namespace reservations_api.DTOs.Responses;
 
-public class UserResponse
+public sealed class UserResponse
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

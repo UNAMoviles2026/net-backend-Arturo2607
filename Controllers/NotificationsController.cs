@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using reservations_api.DTOs.Requests;
+using reservations_api.DTOs.Responses;
 using reservations_api.Services;
 
 namespace reservations_api.Controllers;
 
 [ApiController]
+[Produces("application/json")]
 [Route("api/[controller]")]
 public class NotificationsController : ControllerBase
 {
@@ -15,20 +17,15 @@ public class NotificationsController : ControllerBase
         _notificationService = notificationService;
     }
 
+    /// <summary>Persist the device token for push notifications (FCM).</summary>
     [HttpPost("token")]
-    public async Task<IActionResult> SaveToken([FromBody] SaveDeviceTokenRequest request)
+    [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<MessageResponse>> SaveToken([FromBody] SaveDeviceTokenRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            return ValidationProblem(ModelState);
-        }
-
-        var saved = await _notificationService.SaveDeviceTokenAsync(request.UserId, request.DeviceToken);
-        if (!saved)
-        {
-            return NotFound(new { message = "User not found" });
-        }
-
-        return Ok(new { message = "Token saved" });
+        await _notificationService.SaveDeviceTokenAsync(request.UserId, request.DeviceToken);
+        return Ok(new MessageResponse { Message = "Token saved." });
     }
 }
